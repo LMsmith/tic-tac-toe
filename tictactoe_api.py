@@ -103,8 +103,8 @@ class TicTacToeApi(remote.Service):
                 game.game_over = True
                 return game.to_form("Player wins!")
 
-            omove = computer_move(game.remaining_moves,
-                            game.o_moves)
+            omove = computer_move(game.o_moves, game.x_moves,
+                            game.remaining_moves)
             game.remaining_moves.remove(omove)
             game.o_moves.append(omove)
             is_computer_win = check_win(game.o_moves, omove)
