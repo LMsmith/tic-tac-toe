@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-`
-"""api.py - Create and configure the Game API exposing the resources.
-This can also contain game logic. For more complex games it would be wise to
-move game logic to another file. Ideally the API will be simple, concerned
-primarily with communication to/from the API's users."""
+"""tictactoe_api.py - Create and configure the Game API exposing the
+resources. This can also contain game logic. For more complex games it would
+be wise to move game logic to another file. Ideally the API will be simple,
+concerned primarily with communication to/from the API's users."""
 
 
 import logging
 import endpoints
-import random
 from protorpc import remote, messages
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
@@ -100,7 +99,7 @@ class TicTacToeApi(remote.Service):
             is_player_win = check_win(game.x_moves, request.move)
 
             if is_player_win == "win":
-                game.game_over = True
+                game.end_game(True)
                 return game.to_form("Player wins!")
 
             omove = computer_move(game.o_moves, game.x_moves,
@@ -110,13 +109,14 @@ class TicTacToeApi(remote.Service):
             is_computer_win = check_win(game.o_moves, omove)
 
             if is_computer_win == "win":
-                game.game_over = True
+                game.end_game(False)
                 return game.to_form("Computer wins!")
 
             msg += ", 'O' marked on {}".format(omove)
 
             if(len(game.remaining_moves) == 0):
-                return "The game has ended in a tie!"
+                game.end_game(False)
+                return game.to_form("The game has ended in a tie!")
 
         else:
             return game.to_form('That spot is already marked!')
@@ -125,26 +125,26 @@ class TicTacToeApi(remote.Service):
         return game.to_form(msg)
 
 
-    # @endpoints.method(response_message=ScoreForms,
-    #                   path='scores',
-    #                   name='get_scores',
-    #                   http_method='GET')
-    # def get_scores(self, request):
-    #     """Return all scores"""
-    #     return ScoreForms(items=[score.to_form() for score in Score.query()])
-    #
-    # @endpoints.method(request_message=USER_REQUEST,
-    #                   response_message=ScoreForms,
-    #                   path='scores/user/{user_name}',
-    #                   name='get_user_scores',
-    #                   http_method='GET')
-    # def get_user_scores(self, request):
-    #     """Returns all of an individual User's scores"""
-    #     user = User.query(User.name == request.user_name).get()
-    #     if not user:
-    #         raise endpoints.NotFoundException(
-    #                 'A User with that name does not exist!')
-    #     scores = Score.query(Score.user == user.key)
-    #     return ScoreForms(items=[score.to_form() for score in scores])
+    @endpoints.method(response_message=ScoreForms,
+                      path='scores',
+                      name='get_scores',
+                      http_method='GET')
+    def get_scores(self, request):
+        """Return all scores"""
+        return ScoreForms(items=[score.to_form() for score in Score.query()])
+
+    @endpoints.method(request_message=USER_REQUEST,
+                      response_message=ScoreForms,
+                      path='scores/user/{user_name}',
+                      name='get_user_scores',
+                      http_method='GET')
+    def get_user_scores(self, request):
+        """Returns all of an individual User's scores"""
+        user = User.query(User.name == request.user_name).get()
+        if not user:
+            raise endpoints.NotFoundException(
+                    'A User with that name does not exist!')
+        scores = Score.query(Score.user == user.key)
+        return ScoreForms(items=[score.to_form() for score in scores])
 
 api = endpoints.api_server([TicTacToeApi])

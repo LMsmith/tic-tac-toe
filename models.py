@@ -10,8 +10,7 @@ from google.appengine.ext import ndb
 class User(ndb.Model):
     """User profile"""
     name = ndb.StringProperty(required=True)
-    email =ndb.StringProperty()
-
+    email =ndb.StringProperty
 
 class Game(ndb.Model):
     """Game object"""
@@ -74,7 +73,7 @@ class Score(ndb.Model):
 
     def to_form(self):
         return ScoreForm(user_name=self.user.get().name, won=self.won,
-                         date=str(self.date), guesses=self.guesses)
+                         date=str(self.date))
 
 
 class GameForm(messages.Message):

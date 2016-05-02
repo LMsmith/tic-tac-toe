@@ -1,0 +1,32 @@
+Models used:
+    1. User:
+        a. No attributes added to skeleton class
+        b. Req. name and email
+    2. Game:
+        a. removed guesses, min, max and attempts
+        b. added remaining_moves, x_moves and o_moves
+        c. added attributes are IntegerProperty(repeated = True) and are python lists
+        d. x_moves and o_moves start out empty since no moves have been made
+            Note: Game needed to track the user's moves as well as the computer moves
+        e. remaining_moves contains all possible moves at game start
+            Note: Game needed to track empty spaces on the game board and raise an exception when the player tries to mark a marked spot.
+            Note: Integers stored in this list are representative of spaces on the Tic-Tac-Toe board as detailled in README.md
+    3. Score:
+        a. removed guesses
+            Note: I considered keeping this and renaming it "moves", but decided it wasn't a particularly interesting statistic in this game
+        b. score requires user, date, and won(True or False)
+
+Struggles and process implementing new game logic:
+    1. Taking turns: player and computer
+        a. The game relies on players alternating so the computer automatically makes a move after the player if
+            the game is not over and there are remaining moves to be made.
+        b. Both players needed to be bound by the rules of the game so I implemented logic to prevent the computer_move
+            from making an illegal move.
+    2. Computer as an intelligent player vs. random move selection
+        a. Started with an opponent that made random selections
+        b. Added logic so computer could make the best move on each turn
+        c. Struggled with refactoring repetitive code, but refactored functions so
+            i. player and enemy could use same "win" function and
+            ii. computer could use the same function to check its best offensive move and best
+                defensive move before selecting a space.
+

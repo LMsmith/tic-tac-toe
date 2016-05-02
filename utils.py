@@ -36,7 +36,10 @@ def get_by_urlsafe(urlsafe, model):
     return entity
 
 def check_win(positions, move):
-    """Checks if move results in a win"""
+    """Returns a status string of 'win' or 'continue'
+    Args:
+        positions: The X's or O's, depending on player turn
+        move: The most recent move"""
 
     status = "continue"
     if move == 1:
@@ -99,13 +102,24 @@ def check_win(positions, move):
     return status
 
 def computer_move(omoves, xmoves, remaining):
-    """Chooses a move for the computer player"""
-    choice = random.choice(remaining)
-    player_moves = [xmoves, omoves]
+    """Returns the computer's move
+    Args:
+        omoves: The O's already marked
+        xmoves: The X's already marked
+        remaining: The remaining empty spaces"""
 
+    choice = random.choice(remaining)
+
+    """If the middle space is available and no winning or
+        saving moves are available, computer chooses 5"""
     if 5 in remaining:
         choice = 5
 
+    player_moves = [xmoves, omoves]
+
+    """Check if there is a move to prevent user from winning
+        or to allow computer to win. Prioritize winning over
+        saving"""
     for moves in player_moves:
         if 1 in moves:
             if 2 in moves and 3 in remaining:
