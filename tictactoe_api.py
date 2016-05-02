@@ -55,10 +55,9 @@ class TicTacToeApi(remote.Service):
         user = User.query(User.name == request.user_name).get()
         if not user:
             raise endpoints.NotFoundException(
-                    'A User with that name does not exist!')
+                    'A User with the name {} does not exist!'.format(request.user_name))
 
-        game = Game.new_game(user.key, request.open_moves,
-                                 request.x_moves, request.o_moves)
+        game = Game.new_game(user.key)
 
         # Use a task queue to update the average attempts remaining.
         # This operation is not needed to complete the creation of a new game
@@ -66,18 +65,18 @@ class TicTacToeApi(remote.Service):
         # taskqueue.add(url='/tasks/cache_average_attempts')
         return game.to_form('Good luck playing Tic-Tac-Toe!')
 
-    # @endpoints.method(request_message=GET_GAME_REQUEST,
-    #                   response_message=GameForm,
-    #                   path='game/{urlsafe_game_key}',
-    #                   name='get_game',
-    #                   http_method='GET')
-    # def get_game(self, request):
-    #     """Return the current game state."""
-    #     game = get_by_urlsafe(request.urlsafe_game_key, Game)
-    #     if game:
-    #         return game.to_form('Time to make a move!')
-    #     else:
-    #         raise endpoints.NotFoundException('Game not found!')
+    @endpoints.method(request_message=GET_GAME_REQUEST,
+                      response_message=GameForm,
+                      path='game/{urlsafe_game_key}',
+                      name='get_game',
+                      http_method='GET')
+    def get_game(self, request):
+        """Return the current game state."""
+        game = get_by_urlsafe(request.urlsafe_game_key, Game)
+        if game:
+            return game.to_form('Time to make a move!')
+        else:
+            raise endpoints.NotFoundException('Game not found!')
 
     # @endpoints.method(request_message=MAKE_MOVE_REQUEST,
     #                   response_message=GameForm,
