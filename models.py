@@ -6,8 +6,6 @@ import random
 from datetime import date
 from protorpc import messages
 from google.appengine.ext import ndb
-import cPickle as pickle
-
 
 class User(ndb.Model):
     """User profile"""
@@ -17,7 +15,7 @@ class User(ndb.Model):
 
 class Game(ndb.Model):
     """Game object"""
-    moves = ndb.IntegerProperty(repeated=True)
+    remaining_moves = ndb.IntegerProperty(repeated=True)
     x_moves = ndb.IntegerProperty(repeated=True)
     o_moves = ndb.IntegerProperty(repeated=True)
     game_over = ndb.BooleanProperty(required=True, default=False)
@@ -27,7 +25,7 @@ class Game(ndb.Model):
     def new_game(cls, user):
         """Creates and returns a new game"""
         game = Game(user=user,
-                    moves=[],
+                    remaining_moves=list(range(1, 10)),
                     x_moves=[],
                     o_moves=[],
                     game_over=False)
@@ -39,7 +37,19 @@ class Game(ndb.Model):
         form = GameForm()
         form.urlsafe_key = self.key.urlsafe()
         form.user_name = self.user.get().name
-        form.moves = self.moves
+        form.remaining_moves = self.remaining_moves
+        form.x_moves = self.x_moves
+        form.o_moves = self.o_moves
+        form.game_over = self.game_over
+        form.message = message
+        return form
+
+    def make_move(self, move):
+        """Returns a GameForm representation of the Game"""
+        form = GameForm()
+        form.urlsafe_key = self.key.urlsafe()
+        form.user_name = self.user.get().name
+        form.remaining_moves = self.remaining_moves
         form.x_moves = self.x_moves
         form.o_moves = self.o_moves
         form.game_over = self.game_over
@@ -70,7 +80,7 @@ class Score(ndb.Model):
 class GameForm(messages.Message):
     """GameForm for outbound game state information"""
     urlsafe_key = messages.StringField(1, required=True)
-    moves = messages.IntegerField(2, repeated=True)
+    remaining_moves = messages.IntegerField(2, repeated=True)
     x_moves = messages.IntegerField(3, repeated=True)
     o_moves = messages.IntegerField(4, repeated=True)
     game_over = messages.BooleanField(5, required=True)

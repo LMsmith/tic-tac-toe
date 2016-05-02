@@ -7,6 +7,7 @@ primarily with communication to/from the API's users."""
 
 import logging
 import endpoints
+import random
 from protorpc import remote, messages
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
@@ -15,6 +16,8 @@ from models import User, Game, Score
 from models import StringMessage, NewGameForm, GameForm, MakeMoveForm,\
     ScoreForms
 from utils import get_by_urlsafe
+from utils import check_win
+from utils import computer_move
 
 NEW_GAME_REQUEST = endpoints.ResourceContainer(NewGameForm)
 GET_GAME_REQUEST = endpoints.ResourceContainer(
@@ -25,7 +28,6 @@ MAKE_MOVE_REQUEST = endpoints.ResourceContainer(
 USER_REQUEST = endpoints.ResourceContainer(user_name=messages.StringField(1),
                                            email=messages.StringField(2))
 
-MEMCACHE_MOVES_REMAINING = 'MOVES_REMAINING'
 
 @endpoints.api(name='tic_tac_toe', version='v1')
 class TicTacToeApi(remote.Service):
@@ -78,33 +80,50 @@ class TicTacToeApi(remote.Service):
         else:
             raise endpoints.NotFoundException('Game not found!')
 
-    # @endpoints.method(request_message=MAKE_MOVE_REQUEST,
-    #                   response_message=GameForm,
-    #                   path='game/{urlsafe_game_key}',
-    #                   name='make_move',
-    #                   http_method='PUT')
-    # def make_move(self, request):
-    #     """Makes a move. Returns a game state with message"""
-    #     game = get_by_urlsafe(request.urlsafe_game_key, Game)
-    #     if game.game_over:
-    #         return game.to_form('Game already over!')
-    #
-    #     game.attempts_remaining -= 1
-    #     if request.guess == game.target:
-    #         game.end_game(True)
-    #         return game.to_form('You win!')
-    #
-    #     if request.guess < game.target:
-    #         msg = 'Too low!'
-    #     else:
-    #         msg = 'Too high!'
-    #
-    #     if game.attempts_remaining < 1:
-    #         game.end_game(False)
-    #         return game.to_form(msg + ' Game over!')
-    #     else:
-    #         game.put()
-    #         return game.to_form(msg)
+    @endpoints.method(request_message=MAKE_MOVE_REQUEST,
+                      response_message=GameForm,
+                      path='game/{urlsafe_game_key}',
+                      name='make_move',
+                      http_method='PUT')
+    def make_move(self, request):
+        """Makes a move. Returns a game state with message"""
+        game = get_by_urlsafe(request.urlsafe_game_key, Game)
+        if game.game_over:
+            return game.to_form('Game already over!')
+
+        if request.move in game.remaining_moves:
+
+            game.remaining_moves.remove(request.move)
+            game.x_moves.append(request.move)
+            msg = "'X' marked on {}".format(request.move)
+
+            is_player_win = check_win(game.x_moves, request.move)
+
+            if is_player_win == "win":
+                game.game_over = True
+                return game.to_form("Player wins!")
+
+            omove = computer_move(game.remaining_moves,
+                            game.o_moves)
+            game.remaining_moves.remove(omove)
+            game.o_moves.append(omove)
+            is_computer_win = check_win(game.o_moves, omove)
+
+            if is_computer_win == "win":
+                game.game_over = True
+                return game.to_form("Computer wins!")
+
+            msg += ", 'O' marked on {}".format(omove)
+
+            if(len(game.remaining_moves) == 0):
+                return "The game has ended in a tie!"
+
+        else:
+            return game.to_form('That spot is already marked!')
+
+        game.put()
+        return game.to_form(msg)
+
 
     # @endpoints.method(response_message=ScoreForms,
     #                   path='scores',
