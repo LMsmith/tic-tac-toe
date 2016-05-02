@@ -1,4 +1,4 @@
-#Full Stack Nanodegree Project 4 Refresh
+#Tic-Tac-Toe: Full Stack Nanodegree Project 4 Refresh
 
 ## Set-Up Instructions:
 1.  Update the value of application in app.yaml to the app ID you have registered
@@ -11,12 +11,17 @@
  
  
 ##Game Description:
-Guess a number is a simple guessing game. Each game begins with a random 'target'
-number between the minimum and maximum values provided, and a maximum number of
-'attempts'. 'Guesses' are sent to the `make_move` endpoint which will reply
-with either: 'too low', 'too high', 'you win', or 'game over' (if the maximum
-number of attempts is reached).
-Many different Guess a Number games can be played by many different Users at any
+Tic-Tac-Toe is a classic 2 player game played on a board with 9 spaces. In this version, the player makes a move by choosing the corresponding number on the board below.
+
+                                                   1 | 2 | 3
+                                                  ___ ___ ___
+                                                   4 | 5 | 6
+                                                  ___ ___ ___
+                                                   7 | 8 | 9
+
+Players take turns marking spaces (one player plays as 'X' and the other plays as 'O'). The game is won when one player has marked 3 spaces in a row horizontally, vertically or diagonally.  If all spaces are filled and neither player has won, the game ends in a draw.
+
+Many different Tic-Tac-Toe games can be played by many different Users at any
 given time. Each game can be retrieved or played by using the path parameter
 `urlsafe_game_key`.
 
@@ -26,7 +31,7 @@ given time. Each game can be retrieved or played by using the path parameter
  - cron.yaml: Cronjob configuration.
  - main.py: Handler for taskqueue handler.
  - models.py: Entity and message definitions including helper methods.
- - utils.py: Helper function for retrieving ndb.Models by urlsafe Key string.
+ - utils.py: Helper function for retrieving ndb.Models by urlsafe Key string. Also contains game logic for computer moves and determining a winner.
 
 ##Endpoints Included:
  - **create_user**
@@ -40,12 +45,10 @@ given time. Each game can be retrieved or played by using the path parameter
  - **new_game**
     - Path: 'game'
     - Method: POST
-    - Parameters: user_name, min, max, attempts
+    - Parameters: user_name, remaining_moves, x_moves, o_moves, game_over
     - Returns: GameForm with initial game state.
     - Description: Creates a new Game. user_name provided must correspond to an
-    existing user - will raise a NotFoundException if not. Min must be less than
-    max. Also adds a task to a task queue to update the average moves remaining
-    for active games.
+    existing user - will raise a NotFoundException if not. Returns a urlsafe_game_key identifying the game.
      
  - **get_game**
     - Path: 'game/{urlsafe_game_key}'
@@ -57,9 +60,9 @@ given time. Each game can be retrieved or played by using the path parameter
  - **make_move**
     - Path: 'game/{urlsafe_game_key}'
     - Method: PUT
-    - Parameters: urlsafe_game_key, guess
+    - Parameters: urlsafe_game_key, move
     - Returns: GameForm with new game state.
-    - Description: Accepts a 'guess' and returns the updated state of the game.
+    - Description: Accepts a 'move' and returns the updated state of the game.
     If this causes a game to end, a corresponding Score entity will be created.
     
  - **get_scores**
@@ -76,14 +79,6 @@ given time. Each game can be retrieved or played by using the path parameter
     - Returns: ScoreForms. 
     - Description: Returns all Scores recorded by the provided player (unordered).
     Will raise a NotFoundException if the User does not exist.
-    
- - **get_active_game_count**
-    - Path: 'games/active'
-    - Method: GET
-    - Parameters: None
-    - Returns: StringMessage
-    - Description: Gets the average number of attempts remaining for all games
-    from a previously cached memcache key.
 
 ##Models Included:
  - **User**
@@ -100,12 +95,11 @@ given time. Each game can be retrieved or played by using the path parameter
     - Representation of a Game's state (urlsafe_key, attempts_remaining,
     game_over flag, message, user_name).
  - **NewGameForm**
-    - Used to create a new game (user_name, min, max, attempts)
+    - Used to create a new game (user_name, remaining_moves, x_moves, o_moves, game_over)
  - **MakeMoveForm**
-    - Inbound make move form (guess).
+    - Inbound make move form (move).
  - **ScoreForm**
-    - Representation of a completed game's Score (user_name, date, won flag,
-    guesses).
+    - Representation of a completed game's Score (user_name, date, won flag).
  - **ScoreForms**
     - Multiple ScoreForm container.
  - **StringMessage**
