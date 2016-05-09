@@ -57,6 +57,13 @@ given time. Each game can be retrieved or played by using the path parameter
     - Returns: GameForm with current game state.
     - Description: Returns the current state of a game.
     
+ - **cancel_game**
+    - Path: 'game/{urlsafe_game_key}'
+    - Method: DELETE
+    - Parameters: urlsafe_game_key
+    - Returns: StringMessage confirming game cancellation.
+    - Description: Cancels an open game.
+
  - **make_move**
     - Path: 'game/{urlsafe_game_key}'
     - Method: PUT
@@ -65,14 +72,14 @@ given time. Each game can be retrieved or played by using the path parameter
     - Description: Accepts a 'move' and returns the updated state of the game.
     If this causes a game to end, a corresponding Score entity will be created.
     
- - **get_scores**
+ - **get_game_history**
     - Path: 'scores'
     - Method: GET
     - Parameters: None
     - Returns: ScoreForms.
     - Description: Returns all Scores in the database (unordered).
     
- - **get_user_scores**
+ - **get_user_games**
     - Path: 'scores/user/{user_name}'
     - Method: GET
     - Parameters: user_name
