@@ -92,6 +92,9 @@ class TicTacToeApi(remote.Service):
         """Cancels a current game."""
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
         if game:
+            if game.game_over:
+                raise endpoints.ConflictException(
+                        'Game is already completed!')
             key = ndb.Key(urlsafe=request.urlsafe_game_key)
             key.delete()
             return StringMessage(message='Game cancelled!')
