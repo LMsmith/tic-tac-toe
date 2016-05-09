@@ -5,11 +5,8 @@ be wise to move game logic to another file. Ideally the API will be simple,
 concerned primarily with communication to/from the API's users."""
 
 
-import logging
 import endpoints
 from protorpc import remote, messages
-from google.appengine.api import memcache
-from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
 from models import User, Game, Score
@@ -44,7 +41,10 @@ class TicTacToeApi(remote.Service):
         if User.query(User.name == request.user_name).get():
             raise endpoints.ConflictException(
                     'A User with that name already exists!')
-        user = User(name=request.user_name, email=request.email)
+        if request.email:
+            user = User(name=request.user_name, email=request.email)
+        else:
+            user = User(name=request.user_name)
         user.put()
         return StringMessage(message='User {} created!'.format(
                 request.user_name))
@@ -124,6 +124,10 @@ class TicTacToeApi(remote.Service):
                 game.end_game(True)
                 return game.to_form("Player wins!")
 
+            if(len(game.remaining_moves) == 0):
+                game.end_game(False)
+                return game.to_form("The game has ended in a tie!")
+
             omove = computer_move(game.o_moves, game.x_moves,
                                   game.remaining_moves)
             game.remaining_moves.remove(omove)
@@ -135,10 +139,6 @@ class TicTacToeApi(remote.Service):
                 return game.to_form("Computer wins!")
 
             msg += ", 'O' marked on {}".format(omove)
-
-            if(len(game.remaining_moves) == 0):
-                game.end_game(False)
-                return game.to_form("The game has ended in a tie!")
 
         else:
             return game.to_form('That spot is already marked!')
