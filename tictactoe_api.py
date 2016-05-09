@@ -10,6 +10,7 @@ import endpoints
 from protorpc import remote, messages
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
+from google.appengine.ext import ndb
 
 from models import User, Game, Score
 from models import StringMessage, NewGameForm, GameForm, MakeMoveForm,\
@@ -20,6 +21,8 @@ from utils import computer_move
 
 NEW_GAME_REQUEST = endpoints.ResourceContainer(NewGameForm)
 GET_GAME_REQUEST = endpoints.ResourceContainer(
+        urlsafe_game_key=messages.StringField(1),)
+DELETE_GAME_REQUEST = endpoints.ResourceContainer(
         urlsafe_game_key=messages.StringField(1),)
 MAKE_MOVE_REQUEST = endpoints.ResourceContainer(
     MakeMoveForm,
@@ -56,7 +59,8 @@ class TicTacToeApi(remote.Service):
         user = User.query(User.name == request.user_name).get()
         if not user:
             raise endpoints.NotFoundException(
-                    'A User with the name {} does not exist!'.format(request.user_name))
+                    'A User with the name {} does not exist!'
+                    .format(request.user_name))
 
         game = Game.new_game(user.key)
 
@@ -76,6 +80,21 @@ class TicTacToeApi(remote.Service):
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
         if game:
             return game.to_form('Time to make a move!')
+        else:
+            raise endpoints.NotFoundException('Game not found!')
+
+    @endpoints.method(request_message=DELETE_GAME_REQUEST,
+                      response_message=StringMessage,
+                      path='game/{urlsafe_game_key}',
+                      name='cancel_game',
+                      http_method='DELETE')
+    def cancel_game(self, request):
+        """Cancels a current game."""
+        game = get_by_urlsafe(request.urlsafe_game_key, Game)
+        if game:
+            key = ndb.Key(urlsafe=request.urlsafe_game_key)
+            key.delete()
+            return StringMessage(message='Game cancelled!')
         else:
             raise endpoints.NotFoundException('Game not found!')
 
@@ -103,7 +122,7 @@ class TicTacToeApi(remote.Service):
                 return game.to_form("Player wins!")
 
             omove = computer_move(game.o_moves, game.x_moves,
-                            game.remaining_moves)
+                                  game.remaining_moves)
             game.remaining_moves.remove(omove)
             game.o_moves.append(omove)
             is_computer_win = check_win(game.o_moves, omove)
@@ -124,22 +143,21 @@ class TicTacToeApi(remote.Service):
         game.put()
         return game.to_form(msg)
 
-
     @endpoints.method(response_message=ScoreForms,
                       path='scores',
-                      name='get_scores',
+                      name='get_game_history',
                       http_method='GET')
-    def get_scores(self, request):
+    def get_game_history(self, request):
         """Return all scores"""
         return ScoreForms(items=[score.to_form() for score in Score.query()])
 
     @endpoints.method(request_message=USER_REQUEST,
                       response_message=ScoreForms,
                       path='scores/user/{user_name}',
-                      name='get_user_scores',
+                      name='get_user_games',
                       http_method='GET')
-    def get_user_scores(self, request):
-        """Returns all of an individual User's scores"""
+    def get_user_games(self, request):
+        """Returns all of an individual User's games"""
         user = User.query(User.name == request.user_name).get()
         if not user:
             raise endpoints.NotFoundException(

@@ -7,10 +7,12 @@ from datetime import date
 from protorpc import messages
 from google.appengine.ext import ndb
 
+
 class User(ndb.Model):
     """User profile"""
     name = ndb.StringProperty(required=True)
-    email =ndb.StringProperty
+    email = ndb.StringProperty
+
 
 class Game(ndb.Model):
     """Game object"""
