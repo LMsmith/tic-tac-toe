@@ -11,7 +11,7 @@ from google.appengine.ext import ndb
 
 from models import User, Game, Score
 from models import StringMessage, NewGameForm, GameForm, MakeMoveForm,\
-    ScoreForms
+    ScoreForms, GameForms
 from utils import get_by_urlsafe
 from utils import check_win
 from utils import computer_move
@@ -108,40 +108,44 @@ class TicTacToeApi(remote.Service):
                       http_method='PUT')
     def make_move(self, request):
         """Makes a move. Returns a game state with message"""
+        if type(request.move) is not int:
+            raise endpoints.BadRequestException('error')
+
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
+        allowed_moves = list(range(1, 10))
+
         if game.game_over:
             return game.to_form('Game already over!')
 
-        if request.move in game.remaining_moves:
 
-            game.remaining_moves.remove(request.move)
-            game.x_moves.append(request.move)
-            msg = "'X' marked on {}".format(request.move)
-
-            is_player_win = check_win(game.x_moves, request.move)
-
-            if is_player_win == "win":
-                game.end_game(True)
-                return game.to_form("Player wins!")
-
-            if(len(game.remaining_moves) == 0):
-                game.end_game(False)
-                return game.to_form("The game has ended in a tie!")
-
-            omove = computer_move(game.o_moves, game.x_moves,
-                                  game.remaining_moves)
-            game.remaining_moves.remove(omove)
-            game.o_moves.append(omove)
-            is_computer_win = check_win(game.o_moves, omove)
-
-            if is_computer_win == "win":
-                game.end_game(False)
-                return game.to_form("Computer wins!")
-
-            msg += ", 'O' marked on {}".format(omove)
-
-        else:
+        if request.move not in game.remaining_moves:
             return game.to_form('That spot is already marked!')
+
+        game.remaining_moves.remove(request.move)
+        game.x_moves.append(request.move)
+        msg = "'X' marked on {}".format(request.move)
+
+        is_player_win = check_win(game.x_moves, request.move)
+
+        if is_player_win == "win":
+            game.end_game(True)
+            return game.to_form("Player wins!")
+
+        if(len(game.remaining_moves) == 0):
+            game.end_game(False)
+            return game.to_form("The game has ended in a tie!")
+
+        omove = computer_move(game.o_moves, game.x_moves,
+                              game.remaining_moves)
+        game.remaining_moves.remove(omove)
+        game.o_moves.append(omove)
+        is_computer_win = check_win(game.o_moves, omove)
+
+        if is_computer_win == "win":
+            game.end_game(False)
+            return game.to_form("Computer wins!")
+
+        msg += ", 'O' marked on {}".format(omove)
 
         game.put()
         return game.to_form(msg)
@@ -155,7 +159,7 @@ class TicTacToeApi(remote.Service):
         return ScoreForms(items=[score.to_form() for score in Score.query()])
 
     @endpoints.method(request_message=USER_REQUEST,
-                      response_message=ScoreForms,
+                      response_message=GameForms,
                       path='scores/user/{user_name}',
                       name='get_user_games',
                       http_method='GET')
@@ -165,7 +169,9 @@ class TicTacToeApi(remote.Service):
         if not user:
             raise endpoints.NotFoundException(
                     'A User with that name does not exist!')
-        scores = Score.query(Score.user == user.key)
-        return ScoreForms(items=[score.to_form() for score in scores])
+        games = Game.query(ndb.AND(Game.user == user.key,
+                                            ndb.AND(Game.game_over == False)))
+
+        return GameForms(items=[game.get_user_games('user games') for game in games])
 
 api = endpoints.api_server([TicTacToeApi])

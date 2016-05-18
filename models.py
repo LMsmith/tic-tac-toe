@@ -45,6 +45,16 @@ class Game(ndb.Model):
         form.message = message
         return form
 
+    def get_user_games(self, message):
+        """Returns active user games"""
+        game = GameForm()
+        game.user_name = self.user.get().name
+        game.urlsafe_key = self.key.urlsafe()
+        game.remaining_moves = self.remaining_moves
+        game.game_over = self.game_over
+        game.message = message
+        return game
+
     def make_move(self, move):
         """Returns a GameForm representation of the Game"""
         form = GameForm()
@@ -88,6 +98,10 @@ class GameForm(messages.Message):
     message = messages.StringField(6, required=True)
     user_name = messages.StringField(7, required=True)
 
+
+class GameForms(messages.Message):
+    """Return multiple GameForms"""
+    items = messages.MessageField(GameForm, 1, repeated=True)
 
 class NewGameForm(messages.Message):
     """Used to create a new game"""
