@@ -73,7 +73,8 @@ class Game(ndb.Model):
         self.game_over = True
         self.put()
         # Add the game to the score 'board'
-        score = Score(user=self.user, date=date.today(), won=won)
+        score = Score(user=self.user, date=date.today(), won=won,
+                                x_moves=self.x_moves, o_moves=self.o_moves)
         score.put()
 
 
@@ -82,10 +83,13 @@ class Score(ndb.Model):
     user = ndb.KeyProperty(required=True, kind='User')
     date = ndb.DateProperty(required=True)
     won = ndb.BooleanProperty(required=True)
+    x_moves = ndb.IntegerProperty(repeated=True)
+    o_moves = ndb.IntegerProperty(repeated=True)
 
     def to_form(self):
         return ScoreForm(user_name=self.user.get().name, won=self.won,
-                         date=str(self.date))
+                         date=str(self.date), x_moves=self.x_moves, o_moves=
+                         self.o_moves)
 
 
 class GameForm(messages.Message):
@@ -118,6 +122,8 @@ class ScoreForm(messages.Message):
     user_name = messages.StringField(1, required=True)
     date = messages.StringField(2, required=True)
     won = messages.BooleanField(3, required=True)
+    x_moves = messages.IntegerField(4, repeated=True)
+    o_moves = messages.IntegerField(5, repeated=True)
 
 
 class ScoreForms(messages.Message):
