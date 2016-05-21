@@ -9,7 +9,7 @@ import endpoints
 from protorpc import remote, messages
 from google.appengine.ext import ndb
 
-from models import User, Game, Score
+from models import User, Game, Score, Users
 from models import StringMessage, NewGameForm, GameForm, MakeMoveForm,\
     ScoreForms, GameForms
 from utils import get_by_urlsafe
@@ -108,15 +108,12 @@ class TicTacToeApi(remote.Service):
                       http_method='PUT')
     def make_move(self, request):
         """Makes a move. Returns a game state with message"""
-        if type(request.move) is not int:
-            raise endpoints.BadRequestException('error')
-
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
+        user = User.query(User.key == game.user).get()
         allowed_moves = list(range(1, 10))
 
         if game.game_over:
             return game.to_form('Game already over!')
-
 
         if request.move not in game.remaining_moves:
             return game.to_form('That spot is already marked!')
@@ -129,10 +126,14 @@ class TicTacToeApi(remote.Service):
 
         if is_player_win == "win":
             game.end_game(True)
+            user.points += 2
+            user.put()
             return game.to_form("Player wins!")
 
         if(len(game.remaining_moves) == 0):
-            game.end_game(False)
+            user.points += 1
+            user.put()
+            game.end_game(True)
             return game.to_form("The game has ended in a tie!")
 
         omove = computer_move(game.o_moves, game.x_moves,
@@ -142,7 +143,8 @@ class TicTacToeApi(remote.Service):
         is_computer_win = check_win(game.o_moves, omove)
 
         if is_computer_win == "win":
-            game.end_game(False)
+            user.name += 2
+            game.end_game(True)
             return game.to_form("Computer wins!")
 
         msg += ", 'O' marked on {}".format(omove)
@@ -173,5 +175,15 @@ class TicTacToeApi(remote.Service):
                                             ndb.AND(Game.game_over == False)))
 
         return GameForms(items=[game.get_user_games('user games') for game in games])
+
+    @endpoints.method(response_message=Users,
+                      path='users/rankings',
+                      name='get_user_rankings',
+                      http_method='GET')
+    def get_user_rankings(self, request):
+        """Return all users"""
+        users = User.query().order(-User.points)
+        return Users(users=[(user.name + ' : ' + str(user.points) + ' points') for user in users])
+
 
 api = endpoints.api_server([TicTacToeApi])

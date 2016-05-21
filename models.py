@@ -12,6 +12,7 @@ class User(ndb.Model):
     """User profile"""
     name = ndb.StringProperty(required=True)
     email = ndb.StringProperty()
+    points = ndb.IntegerProperty(default=0)
 
 
 class Game(ndb.Model):
@@ -57,6 +58,9 @@ class Game(ndb.Model):
 
     def make_move(self, move):
         """Returns a GameForm representation of the Game"""
+        if type(move) is not int:
+            raise ValueError('Move must be an integer!')
+
         form = GameForm()
         form.urlsafe_key = self.key.urlsafe()
         form.user_name = self.user.get().name
@@ -101,6 +105,10 @@ class GameForm(messages.Message):
     game_over = messages.BooleanField(5, required=True)
     message = messages.StringField(6, required=True)
     user_name = messages.StringField(7, required=True)
+
+class Users(messages.Message):
+    """Return multiple Users"""
+    users = messages.StringField(1, repeated=True)
 
 
 class GameForms(messages.Message):
