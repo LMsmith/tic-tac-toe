@@ -112,6 +112,9 @@ class TicTacToeApi(remote.Service):
         user = User.query(User.key == game.user).get()
         allowed_moves = list(range(1, 10))
 
+        if request.move not in allowed_moves:
+            return game.to_form('Move must be between 1 and 9!')
+
         if game.game_over:
             return game.to_form('Game already over!')
 
@@ -172,9 +175,10 @@ class TicTacToeApi(remote.Service):
             raise endpoints.NotFoundException(
                     'A User with that name does not exist!')
         games = Game.query(ndb.AND(Game.user == user.key,
-                                            ndb.AND(Game.game_over == False)))
+                           ndb.AND(if Game.game_over False)))
 
-        return GameForms(items=[game.get_user_games('user games') for game in games])
+        return GameForms(items=[game.get_user_games('user games')
+                         for game in games])
 
     @endpoints.method(response_message=Users,
                       path='users/rankings',
@@ -183,7 +187,8 @@ class TicTacToeApi(remote.Service):
     def get_user_rankings(self, request):
         """Return all users"""
         users = User.query().order(-User.points)
-        return Users(users=[(user.name + ' : ' + str(user.points) + ' points') for user in users])
+        return Users(users=[(user.name + ' : ' +
+                     str(user.points) + ' points') for user in users])
 
 
 api = endpoints.api_server([TicTacToeApi])

@@ -58,9 +58,6 @@ class Game(ndb.Model):
 
     def make_move(self, move):
         """Returns a GameForm representation of the Game"""
-        if type(move) is not int:
-            raise ValueError('Move must be an integer!')
-
         form = GameForm()
         form.urlsafe_key = self.key.urlsafe()
         form.user_name = self.user.get().name
@@ -78,7 +75,7 @@ class Game(ndb.Model):
         self.put()
         # Add the game to the score 'board'
         score = Score(user=self.user, date=date.today(), won=won,
-                                x_moves=self.x_moves, o_moves=self.o_moves)
+                      x_moves=self.x_moves, o_moves=self.o_moves)
         score.put()
 
 
@@ -92,8 +89,8 @@ class Score(ndb.Model):
 
     def to_form(self):
         return ScoreForm(user_name=self.user.get().name, won=self.won,
-                         date=str(self.date), x_moves=self.x_moves, o_moves=
-                         self.o_moves)
+                         date=str(self.date), x_moves=self.x_moves,
+                         o_moves=self.o_moves)
 
 
 class GameForm(messages.Message):
@@ -106,6 +103,7 @@ class GameForm(messages.Message):
     message = messages.StringField(6, required=True)
     user_name = messages.StringField(7, required=True)
 
+
 class Users(messages.Message):
     """Return multiple Users"""
     users = messages.StringField(1, repeated=True)
@@ -114,6 +112,7 @@ class Users(messages.Message):
 class GameForms(messages.Message):
     """Return multiple GameForms"""
     items = messages.MessageField(GameForm, 1, repeated=True)
+
 
 class NewGameForm(messages.Message):
     """Used to create a new game"""
