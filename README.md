@@ -25,6 +25,8 @@ Many different Tic-Tac-Toe games can be played by many different Users at any
 given time. Each game can be retrieved or played by using the path parameter
 `urlsafe_game_key`.
 
+Players earn 1 point per tie and 2 points per win.
+
 ##Files Included:
  - api.py: Contains endpoints and game playing logic.
  - app.yaml: App configuration.
@@ -70,22 +72,29 @@ given time. Each game can be retrieved or played by using the path parameter
     - Parameters: urlsafe_game_key, move
     - Returns: GameForm with new game state.
     - Description: Accepts a 'move' and returns the updated state of the game.
-    If this causes a game to end, a corresponding Score entity will be created.
+    If this causes a game to end, a corresponding Score entity will be created and the User's point total will be incremented if points were earned.
     
  - **get_game_history**
     - Path: 'scores'
     - Method: GET
     - Parameters: None
     - Returns: ScoreForms.
-    - Description: Returns all Scores in the database (unordered).
+    - Description: Returns all completed games in the database (unordered).
     
  - **get_user_games**
     - Path: 'scores/user/{user_name}'
     - Method: GET
     - Parameters: user_name
     - Returns: ScoreForms. 
-    - Description: Returns all Scores recorded by the provided player (unordered).
+    - Description: Returns all active games recorded by the provided player (unordered).
     Will raise a NotFoundException if the User does not exist.
+
+ - **get_user_rankings**
+    - Path: 'users/rankings'
+    - Method: GET
+    - Parameters: None
+    - Returns: Users. 
+    - Description: Returns all Users who have earned points in games, ordered by highest points total.
 
 ##Models Included:
  - **User**
