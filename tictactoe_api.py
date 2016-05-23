@@ -13,8 +13,7 @@ from models import User, Game, Score, Users
 from models import StringMessage, NewGameForm, GameForm, MakeMoveForm,\
     ScoreForms, GameForms
 from utils import get_by_urlsafe
-from utils import check_win
-from utils import computer_move
+from game import check_win, computer_move
 
 NEW_GAME_REQUEST = endpoints.ResourceContainer(NewGameForm)
 GET_GAME_REQUEST = endpoints.ResourceContainer(
@@ -116,14 +115,14 @@ class TicTacToeApi(remote.Service):
             if game.game_over:
                 return game.to_form('Game already over!')
 
-            if request.move not in game.remaining_moves:
+            if int(request.move) not in game.remaining_moves:
                 return game.to_form('That spot is already marked!')
 
-            game.remaining_moves.remove(request.move)
-            game.x_moves.append(request.move)
+            game.remaining_moves.remove(int(request.move))
+            game.x_moves.append(int(request.move))
             msg = "'X' marked on {}".format(request.move)
 
-            is_player_win = check_win(game.x_moves, request.move)
+            is_player_win = check_win(game.x_moves, int(request.move))
 
             if is_player_win == "win":
                 game.end_game(True)
@@ -144,7 +143,7 @@ class TicTacToeApi(remote.Service):
             is_computer_win = check_win(game.o_moves, omove)
 
             if is_computer_win == "win":
-                user.name += 2
+
                 game.end_game(True)
                 return game.to_form("Computer wins!")
 
