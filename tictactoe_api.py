@@ -156,13 +156,19 @@ class TicTacToeApi(remote.Service):
             raise endpoints.BadRequestException(
                     'Your guess should be a number between 1 and 9.')
 
-    @endpoints.method(response_message=ScoreForms,
+    @endpoints.method(request_message=GET_GAME_REQUEST,
+                      response_message=GameForm,
                       path='scores',
                       name='get_game_history',
                       http_method='GET')
     def get_game_history(self, request):
-        """Return all scores"""
-        return ScoreForms(items=[score.to_form() for score in Score.query()])
+        """Return history of requested game"""
+        game = get_by_urlsafe(request.urlsafe_game_key, Game)
+        if game:
+            return game.to_form('History for game: {}'
+                      .format(request.urlsafe_game_key))
+        else:
+            raise endpoints.NotFoundException('Game not found!')
 
     @endpoints.method(request_message=USER_REQUEST,
                       response_message=GameForms,
