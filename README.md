@@ -88,8 +88,8 @@ Players earn 1 point per tie and 2 points per win.
     - Path: 'scores'
     - Method: GET
     - Parameters: None
-    - Returns: ScoreForms.
-    - Description: Returns all completed games in the database (unordered).
+    - Returns: GameForm.
+    - Description: Returns the history of a requested game.
     
  - **get_user_games**
     - Path: 'scores/user/{user_name}'
